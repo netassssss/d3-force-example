@@ -104,6 +104,10 @@ export default {
 
       return link;
     },
+    getRadius(circleItem) {
+      if (circleItem.id.toLowerCase().indexOf('tagaim') > -1) return 3;
+      return (circleItem.id.toLowerCase().indexOf('step') > -1 ? 10 : 5);
+    },
     createNodes(svg, simulation) {
       const node = svg.selectAll('.node')
         .data(this.nodes)
@@ -114,7 +118,7 @@ export default {
       node.append('circle')
         .on('click', (circle) => this.showTooltip(circle, svg))
         .attr('fill', '#ff0000')
-        .attr('r', (t) => (t.id.toLowerCase().indexOf('step') > -1 ? 10 : 5))
+        .attr('r', (t) => this.getRadius(t))
         .style('cursor', (t) => (t.id.toLowerCase().indexOf('step') > -1 ? 'pointer' : 'default'));
 
       node.append('text')
