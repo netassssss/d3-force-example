@@ -7,6 +7,7 @@ import * as d3 from 'd3';
 import { mapGetters } from 'vuex';
 import { init } from '../store/actions';
 
+const color = '#88B1D1';
 export default {
   mounted() {
     this.$store.dispatch(init);
@@ -95,18 +96,22 @@ export default {
     },
     createLinks(svg) {
       const link = svg.append('g')
-        .attr('stroke', '#ff0000')
+        .attr('stroke', color)
         .attr('stroke-opacity', 0.6)
         .selectAll('line')
         .data(this.links)
         .join('line')
-        .attr('stroke-width', 1);
+        .attr('stroke-width', 1)
+        .style('opacity', 0.6);
 
       return link;
     },
     getRadius(circleItem) {
       if (circleItem.id.toLowerCase().indexOf('tagaim') > -1) return 3;
       return (circleItem.id.toLowerCase().indexOf('step') > -1 ? 10 : 5);
+    },
+    getOpacity(circleItem) {
+      return (circleItem.id.toLowerCase().indexOf('step') > -1 && circleItem.id.toLowerCase().indexOf('tagaim') === -1 ? 1 : 0.6);
     },
     createNodes(svg, simulation) {
       const node = svg.selectAll('.node')
@@ -117,8 +122,9 @@ export default {
 
       node.append('circle')
         .on('click', (circle) => this.showTooltip(circle, svg))
-        .attr('fill', '#ff0000')
+        .attr('fill', color)
         .attr('r', (t) => this.getRadius(t))
+        .style('opacity', (t) => this.getOpacity(t))
         .style('cursor', (t) => (t.id.toLowerCase().indexOf('step') > -1 ? 'pointer' : 'default'));
 
       node.append('text')
@@ -143,7 +149,7 @@ export default {
         .attr('width', 100)
         .attr('height', 50)
         .style('fill', 'white')
-        .style('stroke', '#ff0000');
+        .style('stroke', color);
 
       this.tooltip.append('text')
         .text(`Name: ${circle.id}`)
@@ -155,7 +161,7 @@ export default {
       this.tooltip.append('path')
         .attr('d', 'M 0 0 L 120 -20 H 20 V -70 L 0 0')
         .attr('transform', 'translate(-20, 70)')
-        .style('fill', '#ff0000')
+        .style('fill', color)
         .style('opacity', 0.2);
     },
     clickoutside() {
