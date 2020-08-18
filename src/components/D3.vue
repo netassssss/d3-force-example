@@ -136,7 +136,7 @@ export default {
       d3.event.preventDefault();
       this.removeToolip();
       this.tooltip = svg.append('g')
-        .attr('transform', `translate(${circle.x - 50}, ${circle.y - 50})`)
+        .attr('transform', `translate(${circle.x + 20}, ${circle.y - 70})`)
         .attr('width', 100)
         .attr('height', 50);
       this.tooltip.append('rect')
@@ -150,6 +150,13 @@ export default {
         .attr('font-size', '0.50em')
         .attr('dy', '1em')
         .attr('x', 5);
+
+      // append shadow relative to the circle
+      this.tooltip.append('path')
+        .attr('d', 'M 0 0 L 120 -20 H 20 V -70 L 0 0')
+        .attr('transform', 'translate(-20, 70)')
+        .style('fill', '#ff0000')
+        .style('opacity', 0.2);
     },
     clickoutside() {
       document.getElementById(this.randomId).addEventListener('click', (event) => {
