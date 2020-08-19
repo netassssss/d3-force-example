@@ -21,6 +21,12 @@ export default {
       type: Number,
       default: 400,
     },
+    options: {
+      type: Object,
+      default: () => ({
+        withLabels: false,
+      }),
+    },
   },
   computed: {
     ...mapGetters({
@@ -127,13 +133,16 @@ export default {
         .style('opacity', (t) => this.getOpacity(t))
         .style('cursor', (t) => (t.id.toLowerCase().indexOf('step') > -1 ? 'pointer' : 'default'));
 
-      node.append('text')
-        .attr('dx', 12)
-        .attr('dy', '.35em')
-        .attr('font-size', '0.35em')
-        .text((d) => d.id);
-
       return node;
+    },
+    createLabelsOfNodes(node) {
+      if (this.options.withLabels) {
+        node.append('text')
+          .attr('dx', 12)
+          .attr('dy', '.35em')
+          .attr('font-size', '0.35em')
+          .text((d) => d.id);
+      }
     },
     removeToolip() {
       if (this.tooltip) this.tooltip.remove();
@@ -176,6 +185,7 @@ export default {
       const simulation = this.createSimulation();
       const links = this.createLinks(svg);
       const nodes = this.createNodes(svg, simulation);
+      this.createLabelsOfNodes(nodes);
 
       simulation.on('tick', () => {
         links
@@ -184,9 +194,6 @@ export default {
           .attr('x2', (d) => d.target.x)
           .attr('y2', (d) => d.target.y);
 
-        // nodes
-        //   .attr('cx', (d) => d.x)
-        //   .attr('cy', (d) => d.y);
         nodes
           .attr('transform', (d) => `translate(${d.x}, ${d.y})`);
       });
