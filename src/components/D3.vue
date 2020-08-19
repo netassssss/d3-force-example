@@ -198,9 +198,14 @@ export default {
           .attr('transform', (d) => `translate(${d.x}, ${d.y})`);
       });
 
-      // this.createLabels(svg);
       return svg.node();
     },
+    destroySvg() {
+      d3.select('svg').remove();
+    },
+  },
+  destroyed() {
+    this.destroySvg();
   },
   watch: {
     nodes: {
