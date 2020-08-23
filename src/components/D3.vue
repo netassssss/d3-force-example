@@ -1,11 +1,14 @@
 <template>
-  <div :id="randomId"></div>
+  <div style="max-height: 100%; overflow: auto;">
+    <div :id="randomId"></div>
+    <button @click="addNodes">Add Nodes</button>
+  </div>
 </template>
 
 <script>
 import * as d3 from 'd3';
 import { mapGetters } from 'vuex';
-import { init } from '../store/actions';
+import { init, updateNodes } from '../store/actions';
 
 const color = '#88B1D1';
 export default {
@@ -39,6 +42,7 @@ export default {
     return {
       randomId,
       tooltip: null,
+      simulation: null,
     };
   },
   /* eslint no-param-reassign: 0 */
@@ -66,32 +70,6 @@ export default {
         .on('drag', dragged)
         .on('end', dragended);
     },
-    createSimulation1() {
-      const attractForce = d3.forceManyBody()
-        .strength(10)
-        .distanceMax(this.width)
-        .distanceMin(this.width / 10);
-      const repelForce = d3.forceManyBody()
-        .strength(-10)
-        .distanceMax(this.width / 12)
-        .distanceMin(this.width / 60);
-      const link = d3.forceLink(this.links)
-        .id((d) => d.id)
-        .distance(0);
-
-      const simulation = d3.forceSimulation(this.nodes)
-        .alphaDecay(0.03)
-        .force('attractForce', attractForce)
-        .force('repelForce', repelForce)
-        .force('link', link)
-        .force('center', d3.forceCenter(this.width / 2, this.height / 2))
-        .on('tick', () => {
-          this.nodes[0].x = this.width / 2;
-          this.nodes[0].y = this.height / 2;
-        });
-
-      return simulation;
-    },
     createSimulation() {
       const simulation = d3.forceSimulation(this.nodes)
         .force('link', d3.forceLink(this.links).id((d) => d.id))
@@ -100,12 +78,12 @@ export default {
 
       return simulation;
     },
-    createLinks(svg) {
+    createLinks(svg, links) {
       const link = svg.append('g')
         .attr('stroke', color)
         .attr('stroke-opacity', 0.6)
         .selectAll('line')
-        .data(this.links)
+        .data(links)
         .join('line')
         .attr('stroke-width', 1)
         .style('opacity', 0.6);
@@ -113,25 +91,24 @@ export default {
       return link;
     },
     getRadius(circleItem) {
-      if (circleItem.id.toLowerCase().indexOf('tagaim') > -1) return 3;
-      return (circleItem.id.toLowerCase().indexOf('step') > -1 ? 10 : 5);
+      return circleItem.radius;
     },
     getOpacity(circleItem) {
-      return (circleItem.id.toLowerCase().indexOf('step') > -1 && circleItem.id.toLowerCase().indexOf('tagaim') === -1 ? 1 : 0.6);
+      return circleItem.opacity;
     },
-    createNodes(svg, simulation) {
+    createNodes(svg, nodes) {
       const node = svg.selectAll('.node')
-        .data(this.nodes)
+        .data(nodes)
         .enter().append('g')
         .attr('class', 'node')
-        .call(this.drag(simulation));
+        .call(this.drag(this.simulation));
 
       node.append('circle')
         .on('click', (circle) => this.showTooltip(circle, svg))
-        .attr('fill', color)
+        .attr('fill', (d) => d.color)
         .attr('r', (t) => this.getRadius(t))
         .style('opacity', (t) => this.getOpacity(t))
-        .style('cursor', (t) => (t.id.toLowerCase().indexOf('step') > -1 ? 'pointer' : 'default'));
+        .style('cursor', 'pointer');
 
       return node;
     },
@@ -180,14 +157,14 @@ export default {
     },
     initForce() {
       const svg = d3.create('svg')
-        .attr('viewBox', [0, 0, this.width, this.height]);
+        .attr('viewBox', [0, 0, this.width * 1.5, this.height * 1.5]);
 
-      const simulation = this.createSimulation();
-      const links = this.createLinks(svg);
-      const nodes = this.createNodes(svg, simulation);
+      this.simulation = this.createSimulation();
+      const links = this.createLinks(svg, this.links);
+      const nodes = this.createNodes(svg, this.nodes);
       this.createLabelsOfNodes(nodes);
 
-      simulation.on('tick', () => {
+      this.simulation.on('tick', () => {
         links
           .attr('x1', (d) => d.source.x)
           .attr('y1', (d) => d.source.y)
@@ -200,24 +177,40 @@ export default {
 
       return svg.node();
     },
+    updateForce() {
+      if (!this.simulation) return;
+      // stop simulation and drag events
+      this.simulation.stop();
+      this.simulation
+        .nodes(this.nodes)
+        .alpha(1)
+        .alphaTarget(1)
+        .restart();
+    },
     destroySvg() {
       d3.select('svg').remove();
+    },
+    addNodes() {
+      this.$store.dispatch(updateNodes);
     },
   },
   destroyed() {
     this.destroySvg();
   },
+  /* eslint no-debugger: 0 */
   watch: {
     nodes: {
       immediate: true,
-      handler() {
-        if (this.nodes.length) {
+      handler(newVal, oldVal) {
+        if (this.nodes.length && oldVal && !oldVal.length) {
           this.$nextTick(() => {
             const svg = this.initForce();
             const parentNode = document.getElementById(this.randomId);
             parentNode.appendChild(svg);
             this.clickoutside();
           });
+        } else if (this.nodes.length) {
+          this.updateForce();
         }
       },
     },
@@ -225,5 +218,8 @@ export default {
 };
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+  svg {
+    height: 200%;
+  }
 </style>
