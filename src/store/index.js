@@ -20,11 +20,10 @@ export default {
       commit('SET_NODES', nodes);
       commit('SET_LINKS', links);
     },
-    // updateNodes({ commit }) {
-    // const { nodes, links } = nodeHelperInstance.updateNodesAndLinks(10);
-    // commit('SET_NODES', nodes);
-    // commit('SET_LINKS', links);
-    // },
+    updateNodes({ commit }, { node }) {
+      const { links } = nodeHelperInstance.updateLinks(node);
+      commit('SET_LINKS', links);
+    },
   },
   getters,
 };

@@ -74,7 +74,7 @@ export default {
       const simulation = d3.forceSimulation(this.nodes)
         .force('link', d3.forceLink(this.links).id((d) => d.id))
         .force('charge', d3.forceManyBody())
-        .force('center', d3.forceCenter(this.width / 2, this.height / 2));
+        .force('center', d3.forceCenter(this.width / 2, this.height));
 
       return simulation;
     },
@@ -85,8 +85,7 @@ export default {
         .selectAll('line')
         .data(links)
         .join('line')
-        .attr('stroke-width', 1)
-        .style('opacity', 0.6);
+        .attr('stroke-width', 1);
 
       return link;
     },
@@ -149,6 +148,8 @@ export default {
         .attr('transform', 'translate(-20, 70)')
         .style('fill', color)
         .style('opacity', 0.2);
+
+      this.addLinks(circle);
     },
     clickoutside() {
       document.getElementById(this.randomId).addEventListener('click', (event) => {
@@ -169,7 +170,8 @@ export default {
           .attr('x1', (d) => d.source.x)
           .attr('y1', (d) => d.source.y)
           .attr('x2', (d) => d.target.x)
-          .attr('y2', (d) => d.target.y);
+          .attr('y2', (d) => d.target.y)
+          .style('opacity', (d) => (d.visible ? 0.6 : 0));
 
         nodes
           .attr('transform', (d) => `translate(${d.x}, ${d.y})`);
@@ -189,6 +191,9 @@ export default {
     },
     destroySvg() {
       d3.select('svg').remove();
+    },
+    addLinks(node) {
+      this.$store.dispatch(updateNodes, { node });
     },
     addNodes() {
       this.$store.dispatch(updateNodes);

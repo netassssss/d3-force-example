@@ -76,6 +76,7 @@ class NodeHelper1 {
       this.links.push({
         source: parentNode[0],
         target: prettyNode.id,
+        visible: false,
       });
       // this.visitedNodes.add(parentNode[0]);
     }
@@ -100,11 +101,21 @@ class NodeHelper1 {
 
     this.createDescisionTree();
 
-    console.log('node and links', this.nodes, this.links);
     return {
       nodes: [...this.nodes.values()],
       links: this.links,
     };
+  }
+
+  updateLinks(node) {
+    const nodeId = node.id;
+    return this.links
+      .map((link) => {
+        if (link.source.id === nodeId || link.target.id === nodeId) {
+          link.visible = true;
+        }
+        return link;
+      });
   }
 }
 
