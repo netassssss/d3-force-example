@@ -1,4 +1,4 @@
-import nodeHelperInstance from './NodeHelper';
+import nodeHelperInstance from './NodeHelper1';
 import getters from './getters';
 
 export default {
@@ -20,11 +20,11 @@ export default {
       commit('SET_NODES', nodes);
       commit('SET_LINKS', links);
     },
-    updateNodes({ commit }) {
-      const { nodes, links } = nodeHelperInstance.updateNodesAndLinks(10);
-      commit('SET_NODES', nodes);
-      commit('SET_LINKS', links);
-    },
+    // updateNodes({ commit }) {
+    // const { nodes, links } = nodeHelperInstance.updateNodesAndLinks(10);
+    // commit('SET_NODES', nodes);
+    // commit('SET_LINKS', links);
+    // },
   },
   getters,
 };
