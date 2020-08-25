@@ -10,10 +10,10 @@ class NodeHelper1 {
     this.nodes = new Map();
     this.links = [];
 
-    this.totalNodesInSet = 30;
+    this.totalNodesInSet = 120;
 
     this.questions = new Map();
-    // this.visitedNodes = new Set();
+    this.mainNode = null;
   }
 
   // ----------- helpers ---------------- //
@@ -53,7 +53,7 @@ class NodeHelper1 {
   setNodeLevel(node, treeLevel) {
     if (node && !this.nodes.get(node.id)) {
       this.nodes.set(node.id,
-        { ...node, group: treeLevel, visible: true });
+        { ...node, group: treeLevel, visible: false });
     }
     return node;
   }
@@ -84,11 +84,32 @@ class NodeHelper1 {
     }
   }
 
+  createMainNodeConnection(nodeId) {
+    let id = null;
+    let found = this.mainNode;
+    if (!found) {
+      while (!found) {
+        id = `${NodeHelper1.generateQuestion()}-1`;
+        if (!this.questions.has(id)) found = true;
+      }
+      this.mainNode = NodeHelper1.prettyfiy([id, 1]);
+      this.mainNode.color = '#fff';
+      this.mainNode.border = '#303030';
+      this.mainNode.radius = 70;
+      this.setNodeLevel(this.mainNode, 0);
+    }
+    this.links.push({
+      source: this.mainNode.id,
+      target: nodeId,
+    });
+  }
+
   createDescisionTree() {
     const questions = [...this.questions]; // [[id, weight]]
     questions
       .forEach((question, index) => {
-        this.createConnections(question, index);
+        this.createConnections(question, index + 1);
+        this.createMainNodeConnection(question[0]);
       });
   }
 
@@ -109,16 +130,20 @@ class NodeHelper1 {
     };
   }
 
-  updateNodesOpacity(nodeId) {
+  updateNodesOpacity(parentNode) {
+    const nodeId = parentNode.id;
+    parentNode.visible = true;
     const relatedNodes = this.links
       .reduce((acc, link) => {
         if (link.source.id === nodeId) acc.push(link.target.id);
         if (link.target.id === nodeId) acc.push(link.source.id);
         return acc;
       }, []);
-    [...this.nodes.entries()]
+    this.nodes
       .forEach((node) => {
-        if (relatedNodes.indexOf(node.id)) node.visible = true;
+        if (relatedNodes.indexOf(node.id) > -1) {
+          node.visible = true;
+        }
       });
     return [...this.nodes.values()];
   }
@@ -126,6 +151,7 @@ class NodeHelper1 {
   updateLinks(node) {
     const nodeId = node.id;
     return {
+      nodes: this.updateNodesOpacity(node),
       links: this.links
         .map((link) => {
           if (link.source.id === nodeId || link.target.id === nodeId) {

@@ -72,9 +72,13 @@ export default {
     },
     createSimulation() {
       const simulation = d3.forceSimulation(this.nodes)
-        .force('link', d3.forceLink(this.links).id((d) => d.id))
+        .force('link', d3.forceLink(this.links)
+          .id((d) => d.id)
+          .distance((d) => (d.source.group === 0 ? 120 : 400)))
         .force('charge', d3.forceManyBody())
-        .force('center', d3.forceCenter(this.width / 2, this.height));
+        .force('center', d3.forceCenter(this.width / 1.5, this.height / 2))
+        .velocityDecay(0.4)
+        .alphaTarget(0.1);
 
       return simulation;
     },
@@ -93,7 +97,7 @@ export default {
       return circleItem.radius;
     },
     getOpacity(circleItem) {
-      return circleItem.visible ? 1 : 0;
+      return circleItem.visible ? 1 : 0.5;
     },
     createNodes(svg, nodes) {
       const node = svg.selectAll('.node')
@@ -105,6 +109,7 @@ export default {
       node.append('circle')
         .on('click', (circle) => this.showTooltip(circle, svg))
         .attr('fill', (d) => d.color)
+        .attr('stroke', (d) => d.border || '#fff')
         .attr('r', (t) => this.getRadius(t))
         .style('cursor', 'pointer');
 
@@ -124,6 +129,7 @@ export default {
     },
     showTooltip(circle, svg) {
       d3.event.preventDefault();
+      if (circle.group === 0) return;
       this.removeToolip();
       this.tooltip = svg.append('g')
         .attr('transform', `translate(${circle.x + 20}, ${circle.y - 70})`)
@@ -157,7 +163,7 @@ export default {
     },
     initForce() {
       const svg = d3.create('svg')
-        .attr('viewBox', [0, 0, this.width * 1.5, this.height * 1.5]);
+        .attr('viewBox', [0, 0, this.width * 1.3, this.height * 1.5]);
 
       this.simulation = this.createSimulation();
       const links = this.createLinks(svg, this.links);
@@ -174,7 +180,7 @@ export default {
 
         nodes
           .attr('transform', (d) => `translate(${d.x}, ${d.y})`)
-          .style('opacity', (t) => this.getOpacity(t));
+          .attr('opacity', (t) => this.getOpacity(t));
       });
 
       return svg.node();
