@@ -93,7 +93,7 @@ export default {
       return circleItem.radius;
     },
     getOpacity(circleItem) {
-      return circleItem.opacity;
+      return circleItem.visible ? 1 : 0;
     },
     createNodes(svg, nodes) {
       const node = svg.selectAll('.node')
@@ -106,7 +106,6 @@ export default {
         .on('click', (circle) => this.showTooltip(circle, svg))
         .attr('fill', (d) => d.color)
         .attr('r', (t) => this.getRadius(t))
-        .style('opacity', (t) => this.getOpacity(t))
         .style('cursor', 'pointer');
 
       return node;
@@ -174,7 +173,8 @@ export default {
           .style('opacity', (d) => (d.visible ? 0.6 : 0));
 
         nodes
-          .attr('transform', (d) => `translate(${d.x}, ${d.y})`);
+          .attr('transform', (d) => `translate(${d.x}, ${d.y})`)
+          .style('opacity', (t) => this.getOpacity(t));
       });
 
       return svg.node();

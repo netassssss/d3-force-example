@@ -22,7 +22,7 @@ class NodeHelper1 {
   }
 
   static generateWeight() {
-    return Math.floor(NodeHelper1.randomInRange(1, 6));
+    return Math.floor(NodeHelper1.randomInRange(1, 4));
   }
 
   static generateQuestion() {
@@ -51,14 +51,17 @@ class NodeHelper1 {
   // ------------------------------------- //
 
   setNodeLevel(node, treeLevel) {
-    if (node && !this.nodes.get(node.id)) this.nodes.set(node.id, { ...node, group: treeLevel });
+    if (node && !this.nodes.get(node.id)) {
+      this.nodes.set(node.id,
+        { ...node, group: treeLevel, visible: true });
+    }
     return node;
   }
 
-  getNode(allNodes, parenNode) {
+  static getNode(allNodes, parenNode) {
     // reduce visited from original nodes
     const validNodes = [...allNodes]
-      .filter((node) => !this.nodes.get(node[0]) && node[0] !== parenNode[0]);
+      .filter((node) => node[0] !== parenNode[0]);
     if (validNodes.length === 0) return null;
     // if (validNodes.length === 1) return { id: validNodes[0][0], weight: 0 };
     const node = validNodes[Math.floor(Math.random() * validNodes.length)];
@@ -69,7 +72,7 @@ class NodeHelper1 {
     const weight = parentNode[1];
     const allNodes = [...this.questions]; // [[name, weight]]
     for (let i = 0; i < weight; i += 1) {
-      const node = this.getNode(allNodes, parentNode);
+      const node = NodeHelper1.getNode(allNodes, parentNode);
       if (!node || parentNode[0] === node[0]) continue;
       this.setNodeLevel(NodeHelper1.prettyfiy(parentNode), level);
       const prettyNode = this.setNodeLevel(node, level);
@@ -78,7 +81,6 @@ class NodeHelper1 {
         target: prettyNode.id,
         visible: false,
       });
-      // this.visitedNodes.add(parentNode[0]);
     }
   }
 
@@ -107,15 +109,31 @@ class NodeHelper1 {
     };
   }
 
+  updateNodesOpacity(nodeId) {
+    const relatedNodes = this.links
+      .reduce((acc, link) => {
+        if (link.source.id === nodeId) acc.push(link.target.id);
+        if (link.target.id === nodeId) acc.push(link.source.id);
+        return acc;
+      }, []);
+    [...this.nodes.entries()]
+      .forEach((node) => {
+        if (relatedNodes.indexOf(node.id)) node.visible = true;
+      });
+    return [...this.nodes.values()];
+  }
+
   updateLinks(node) {
     const nodeId = node.id;
-    return this.links
-      .map((link) => {
-        if (link.source.id === nodeId || link.target.id === nodeId) {
-          link.visible = true;
-        }
-        return link;
-      });
+    return {
+      links: this.links
+        .map((link) => {
+          if (link.source.id === nodeId || link.target.id === nodeId) {
+            link.visible = true;
+          }
+          return link;
+        }),
+    };
   }
 }
 

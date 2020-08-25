@@ -21,7 +21,8 @@ export default {
       commit('SET_LINKS', links);
     },
     updateNodes({ commit }, { node }) {
-      const { links } = nodeHelperInstance.updateLinks(node);
+      const { nodes, links } = nodeHelperInstance.updateLinks(node);
+      commit('SET_NODES', nodes);
       commit('SET_LINKS', links);
     },
   },
