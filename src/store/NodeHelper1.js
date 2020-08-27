@@ -14,6 +14,8 @@ class NodeHelper1 {
 
     this.questions = new Map();
     this.mainNode = null;
+
+    this.globalLevel = 1;
   }
 
   // ----------- helpers ---------------- //
@@ -68,14 +70,19 @@ class NodeHelper1 {
     return NodeHelper1.prettyfiy(node);
   }
 
+  getLevel(index) {
+    if (index >= ((this.questions.size / 4) * this.globalLevel)) this.globalLevel += 1;
+    return this.globalLevel;
+  }
+
   createConnections(parentNode, level) {
     const weight = parentNode[1];
     const allNodes = [...this.questions]; // [[name, weight]]
     for (let i = 0; i < weight; i += 1) {
       const node = NodeHelper1.getNode(allNodes, parentNode);
       if (!node || parentNode[0] === node[0]) continue;
-      this.setNodeLevel(NodeHelper1.prettyfiy(parentNode), level);
-      const prettyNode = this.setNodeLevel(node, level);
+      this.setNodeLevel(NodeHelper1.prettyfiy(parentNode), level + i);
+      const prettyNode = this.setNodeLevel(node, level + i);
       this.links.push({
         source: parentNode[0],
         target: prettyNode.id,
@@ -108,7 +115,8 @@ class NodeHelper1 {
     const questions = [...this.questions]; // [[id, weight]]
     questions
       .forEach((question, index) => {
-        this.createConnections(question, index + 1);
+        const level = this.getLevel(index);
+        this.createConnections(question, level);
         this.createMainNodeConnection(question[0]);
       });
   }
@@ -154,7 +162,8 @@ class NodeHelper1 {
       nodes: this.updateNodesOpacity(node),
       links: this.links
         .map((link) => {
-          if (link.source.id === nodeId || link.target.id === nodeId) {
+          if ((link.source.id !== this.mainNode.id && link.target.id !== this.mainNode.id)
+            && (link.source.id === nodeId || link.target.id === nodeId)) {
             link.visible = true;
           }
           return link;

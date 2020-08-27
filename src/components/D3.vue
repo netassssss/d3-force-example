@@ -99,6 +99,25 @@ export default {
     getOpacity(circleItem) {
       return circleItem.visible ? 1 : 0.5;
     },
+    innerMainText(nodes) {
+      /* eslint no-console:0 */
+      /* eslint no-unused-vars:0 */
+      nodes
+        .each((node) => {
+          if (node.group === 0) {
+            d3.select(this.parentNode)
+              // .append('rect')
+              // .attr('fill', '#88B1D1')
+              // .attr('width', '50')
+              // .attr('height', '30')
+              .append('text')
+              .text('Yes')
+              .attr('font-size', '0.50em')
+              .attr('dy', '1em')
+              .attr('x', 5);
+          }
+        });
+    },
     createNodes(svg, nodes) {
       const node = svg.selectAll('.node')
         .data(nodes)
@@ -107,12 +126,13 @@ export default {
         .call(this.drag(this.simulation));
 
       node.append('circle')
-        .on('click', (circle) => this.showTooltip(circle, svg))
+        // .on('click', (circle) => this.showTooltip(circle, svg))
         .attr('fill', (d) => d.color)
         .attr('stroke', (d) => d.border || '#fff')
         .attr('r', (t) => this.getRadius(t))
         .style('cursor', 'pointer');
 
+      this.innerMainText(svg.selectAll('.node'));
       return node;
     },
     createLabelsOfNodes(node) {
