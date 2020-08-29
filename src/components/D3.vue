@@ -9,6 +9,7 @@
 import * as d3 from 'd3';
 import { mapGetters } from 'vuex';
 import { init, updateNodes } from '../store/actions';
+import TextUtil from './mainNodeHelper/textHelper';
 
 const color = '#88B1D1';
 export default {
@@ -74,7 +75,7 @@ export default {
       const simulation = d3.forceSimulation(this.nodes)
         .force('link', d3.forceLink(this.links)
           .id((d) => d.id)
-          .distance((d) => (d.source.group === 0 ? 120 : 400)))
+          .distance((d) => (d.source.group === 0 ? 120 : 200)))
         .force('charge', d3.forceManyBody())
         .force('center', d3.forceCenter(this.width / 1.5, this.height / 2))
         .velocityDecay(0.4)
@@ -97,26 +98,48 @@ export default {
       return circleItem.radius;
     },
     getOpacity(circleItem) {
-      return circleItem.visible ? 1 : 0.5;
+      return circleItem.group === 0 || circleItem.visible ? 1 : 0.5;
     },
-    innerMainText(nodes) {
+    getElementFeatures(node) {
+      return {
+        x: node.x, y: node.y, id: node.id, w: node.radius, h: node.radius,
+      };
+    },
+    /* eslint no-unused-vars: 0 */
+    setMainCircleText(node, {
+      id, w, h,
+    }) {
+      const textHelper = new TextUtil({ w, h });
+
+      textHelper.append(node, () => this.addLinks());
+      // node
+      //   .append('text')
+      //   .text(`Name: ${id}`)
+      //   .attr('transform', (d) => translate(d))
+      //   .attr('font-size', `${em}em`);
+      node.raise();
+    },
+    getMainCircle(nodes) {
       /* eslint no-console:0 */
-      /* eslint no-unused-vars:0 */
+      const self = this;
+      let features = {};
       nodes
-        .each((node) => {
+        .each(function (node) {
           if (node.group === 0) {
-            d3.select(this.parentNode)
-              // .append('rect')
-              // .attr('fill', '#88B1D1')
-              // .attr('width', '50')
-              // .attr('height', '30')
-              .append('text')
-              .text('Yes')
-              .attr('font-size', '0.50em')
-              .attr('dy', '1em')
-              .attr('x', 5);
+            const circleElm = d3.select(this)
+              .selectAll('circle')
+              .raise();
+            circleElm
+              .each((circle) => {
+                features = self.getElementFeatures(circle);
+              });
+            self.setMainCircleText(d3.select(this), features);
           }
         });
+    },
+    innerMainText(svg) {
+      const nodes = svg.selectAll('.node');
+      this.getMainCircle(nodes);
     },
     createNodes(svg, nodes) {
       const node = svg.selectAll('.node')
@@ -126,13 +149,13 @@ export default {
         .call(this.drag(this.simulation));
 
       node.append('circle')
-        // .on('click', (circle) => this.showTooltip(circle, svg))
+        .on('click', (circle) => this.showTooltip(circle, svg))
         .attr('fill', (d) => d.color)
         .attr('stroke', (d) => d.border || '#fff')
         .attr('r', (t) => this.getRadius(t))
         .style('cursor', 'pointer');
 
-      this.innerMainText(svg.selectAll('.node'));
+      this.innerMainText(svg);
       return node;
     },
     createLabelsOfNodes(node) {
@@ -147,12 +170,9 @@ export default {
     removeToolip() {
       if (this.tooltip) this.tooltip.remove();
     },
-    showTooltip(circle, svg) {
-      d3.event.preventDefault();
-      if (circle.group === 0) return;
-      this.removeToolip();
+    setElement(svg, { x, y, id }) {
       this.tooltip = svg.append('g')
-        .attr('transform', `translate(${circle.x + 20}, ${circle.y - 70})`)
+        .attr('transform', `translate(${x + 20}, ${y - 70})`)
         .attr('width', 100)
         .attr('height', 50);
       this.tooltip.append('rect')
@@ -162,11 +182,16 @@ export default {
         .style('stroke', color);
 
       this.tooltip.append('text')
-        .text(`Name: ${circle.id}`)
+        .text(`Name: ${id}`)
         .attr('font-size', '0.50em')
         .attr('dy', '1em')
         .attr('x', 5);
-
+    },
+    showTooltip(circle, svg) {
+      d3.event.preventDefault();
+      if (circle.group === 0) return;
+      this.removeToolip();
+      this.setElement(svg, { x: circle.x, y: circle.y, id: circle.id });
       // append shadow relative to the circle
       this.tooltip.append('path')
         .attr('d', 'M 0 0 L 120 -20 H 20 V -70 L 0 0')
@@ -218,8 +243,8 @@ export default {
     destroySvg() {
       d3.select('svg').remove();
     },
-    addLinks(node) {
-      this.$store.dispatch(updateNodes, { node });
+    addLinks() {
+      this.$store.dispatch(updateNodes);
     },
     addNodes() {
       this.$store.dispatch(updateNodes);

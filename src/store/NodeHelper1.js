@@ -16,6 +16,7 @@ class NodeHelper1 {
     this.mainNode = null;
 
     this.globalLevel = 1;
+    this.lastSelected = null;
   }
 
   // ----------- helpers ---------------- //
@@ -49,6 +50,20 @@ class NodeHelper1 {
     return {
       id: node[0], weight: node[1], radius: 10, opacity: 1, color: '#88B1D1',
     };
+  }
+
+  static getRandomNode(arr, level) {
+    let node;
+    const nodesByGroup = level ? arr.filter((a) => a.group === level) : arr;
+    const maxTries = nodesByGroup.length * 3;
+    let tryNum = 0;
+    while (!node || tryNum >= maxTries) {
+      const index = Math.floor(Math.random() * nodesByGroup.length);
+      const randNode = nodesByGroup[index];
+      if (!randNode.visible) node = randNode;
+      tryNum += 1;
+    }
+    return node;
   }
   // ------------------------------------- //
 
@@ -117,7 +132,7 @@ class NodeHelper1 {
       .forEach((question, index) => {
         const level = this.getLevel(index);
         this.createConnections(question, level);
-        this.createMainNodeConnection(question[0]);
+        if (level === 1) this.createMainNodeConnection(question[0]);
       });
   }
 
@@ -138,6 +153,25 @@ class NodeHelper1 {
     };
   }
 
+  getLastNode() {
+    let res = this.lastSelected;
+    const randNodes = this.links
+      .filter((link) => link.target.id === this.lastSelected.id)
+      .map((link) => this.nodes.get(link.source.id));
+    if (randNodes.length) {
+      const index = Math.floor(Math.random() * randNodes.length);
+      res = randNodes[index];
+    }
+    return res;
+  }
+
+  getSelectedNode() {
+    const node = this.lastSelected
+      ? this.getLastNode() : NodeHelper1.getRandomNode([...this.nodes.values()], 1);
+    this.lastSelected = node;
+    return node;
+  }
+
   updateNodesOpacity(parentNode) {
     const nodeId = parentNode.id;
     parentNode.visible = true;
@@ -156,7 +190,14 @@ class NodeHelper1 {
     return [...this.nodes.values()];
   }
 
-  updateLinks(node) {
+  updateLinks() {
+    const node = this.getSelectedNode();
+    if (!node) {
+      return {
+        nodes: this.nodes,
+        links: this.links,
+      };
+    }
     const nodeId = node.id;
     return {
       nodes: this.updateNodesOpacity(node),
