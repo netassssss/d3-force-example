@@ -16,7 +16,7 @@ class NodeHelper1 {
     this.mainNode = null;
 
     this.globalLevel = 1;
-    this.lastSelected = null;
+    this.lastSelected = [];
   }
 
   // ----------- helpers ---------------- //
@@ -63,7 +63,7 @@ class NodeHelper1 {
       if (!randNode.visible) node = randNode;
       tryNum += 1;
     }
-    return node;
+    return node.id;
   }
   // ------------------------------------- //
 
@@ -153,23 +153,41 @@ class NodeHelper1 {
     };
   }
 
-  getLastNode() {
-    let res = this.lastSelected;
-    const randNodes = this.links
-      .filter((link) => link.target.id === this.lastSelected.id)
-      .map((link) => this.nodes.get(link.source.id));
-    if (randNodes.length) {
-      const index = Math.floor(Math.random() * randNodes.length);
-      res = randNodes[index];
+  getNodeFromPath(level = 1) {
+    let index = 0;
+    // find source by source and last target
+    let lastSource = this.lastSelected[index];
+    const getLinkCondition = () => this.links
+      .find((link) => lastSource === link.source.id
+        && (link.target.group >= level || !link.target.visible));
+    const getTargetLink = () => {
+      const maxTries = this.nodes.size;
+      let tryNum = 0;
+      let target = getLinkCondition();
+      while (!target && tryNum < maxTries) {
+        lastSource = NodeHelper1.getRandomNode([...this.nodes.values()], 1);
+        target = getLinkCondition();
+        tryNum += 1;
+      }
+      return target;
+    };
+
+    while (index < this.lastSelected.length) {
+      // node will be the source, take the next node to be the source
+      const targetLink = getTargetLink();
+      if (!targetLink) break;
+      index += 1;
+      level += 1;
+      lastSource = targetLink.target.id;
     }
-    return res;
+    return lastSource;
   }
 
   getSelectedNode() {
-    const node = this.lastSelected
-      ? this.getLastNode() : NodeHelper1.getRandomNode([...this.nodes.values()], 1);
-    this.lastSelected = node;
-    return node;
+    const nodeId = this.lastSelected.length
+      ? this.getNodeFromPath() : NodeHelper1.getRandomNode([...this.nodes.values()], 1);
+    this.lastSelected.push(nodeId);
+    return nodeId;
   }
 
   updateNodesOpacity(parentNode) {
@@ -191,16 +209,15 @@ class NodeHelper1 {
   }
 
   updateLinks() {
-    const node = this.getSelectedNode();
-    if (!node) {
+    const nodeId = this.getSelectedNode();
+    if (!nodeId) {
       return {
         nodes: this.nodes,
         links: this.links,
       };
     }
-    const nodeId = node.id;
     return {
-      nodes: this.updateNodesOpacity(node),
+      nodes: this.updateNodesOpacity(this.nodes.get(nodeId)),
       links: this.links
         .map((link) => {
           if ((link.source.id !== this.mainNode.id && link.target.id !== this.mainNode.id)
