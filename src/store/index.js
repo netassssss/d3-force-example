@@ -1,5 +1,5 @@
-import nodeHelperInstance from './NodeHelper1';
 import getters from './getters';
+import nodeHelperInstances from './nodeHelper/NeuralManager';
 
 export default {
   state: {
@@ -15,13 +15,17 @@ export default {
     },
   },
   actions: {
-    init({ commit }) {
-      const { nodes, links } = nodeHelperInstance.createInitialNodesAndLinks();
+    createInstance() {
+      nodeHelperInstances.set(this);
+    },
+    init({ commit, dispatch }) {
+      dispatch('createInstance');
+      const { nodes, links } = nodeHelperInstances.get(this, 'createInitialNodesAndLinks');
       commit('SET_NODES', nodes);
       commit('SET_LINKS', links);
     },
     updateNodes({ commit }) {
-      const { nodes, links } = nodeHelperInstance.updateLinks();
+      const { nodes, links } = nodeHelperInstances.get(this, 'updateLinks');
       commit('SET_NODES', nodes);
       commit('SET_LINKS', links);
     },
